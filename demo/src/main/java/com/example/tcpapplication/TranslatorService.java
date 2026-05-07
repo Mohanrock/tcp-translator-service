@@ -7,9 +7,9 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 import reactor.netty.tcp.TcpServer;
 
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 @Service
 public class TranslatorService {
@@ -21,7 +21,7 @@ public class TranslatorService {
     private String httpEndpoint;
 
     private final WebClient webClient;
-    private final List<DeviceMessage> messageHistory = Collections.synchronizedList(new LinkedList<>());
+    private final Queue<DeviceMessage> messageHistory = new ConcurrentLinkedQueue<>();
 
     public TranslatorService(WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder.build();
@@ -63,9 +63,9 @@ public class TranslatorService {
     private void saveToHistory(DeviceMessage msg) {
         synchronized (messageHistory) {
             if (messageHistory.size() >= 100) {
-                messageHistory.removeFirst();
+                messageHistory.poll();
             }
-            messageHistory.add(msg);
+            messageHistory.offer(msg);
         }
     }
 
